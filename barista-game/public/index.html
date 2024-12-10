@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Barista Game</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+
+    <!-- Обновленные пути к JS файлам -->
+    <script src="js/managers/UIManager.js"></script>
+    <script src="js/managers/CustomerManager.js"></script>
+    <script src="js/managers/CashRegisterManager.js"></script>
+    <script src="js/managers/StationManager.js"></script>
+    <script src="js/managers/InteractionManager.js"></script>
+    <script src="js/controllers/CameraController.js"></script>
+    <script src="js/Game.js"></script>
+</body>
+
+</html>
