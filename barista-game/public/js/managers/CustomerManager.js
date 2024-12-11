@@ -2,9 +2,10 @@ class CustomerManager {
     constructor(scene, ui) {
         this.scene = scene;
         this.ui = ui;
+        this.avatarManager = new AvatarManager(scene);
         this.customerZone = this.createCustomerZone();
         this.currentCustomer = null;
-        this.orderStatus = 'waiting'; // waiting -> ordered -> preparing -> ready -> completed -> finished
+        this.orderStatus = 'waiting';
     }
 
     createCustomerZone() {
@@ -24,14 +25,12 @@ class CustomerManager {
 
     async handleCustomerInteraction() {
         try {
-            console.log('Текущий статус заказа:', this.orderStatus);
             if (this.orderStatus === 'waiting') {
                 const response = await fetch('/api/customer/interact', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
                 const data = await response.json();
-                console.log('Ответ от сервера:', data);
 
                 if (data.success) {
                     this.currentCustomer = data.customer;
@@ -74,14 +73,10 @@ class CustomerManager {
 
     async updateCustomerInfo() {
         try {
-            console.log('Запрос информации о текущем клиенте...');
             const response = await fetch('/api/customer/current');
             const data = await response.json();
-            console.log('Полученные данные:', data);
 
             if (data.currentCustomer) {
-                this.currentCustomer = data.currentCustomer;
-                this.orderStatus = 'waiting';
                 this.ui.showHint(
                     `Клиент ${data.currentCustomer.name} ждет заказ: ${data.currentCustomer.order.drink}`
                 );
@@ -120,5 +115,36 @@ class CustomerManager {
 
     getInteractiveObjects() {
         return [this.customerZone];
+    }
+
+    async createCustomer(customerData) {
+        try {
+            // Получаем URL случайного аватара
+            const avatarUrl = await this.avatarManager.getRandomAvatar();
+
+            // Загружаем 3D модель
+            const avatar = await this.avatarManager.loadAvatarForCustomer(
+                customerData.id,
+                avatarUrl
+            );
+
+            if (avatar) {
+                // Позиционируем аватар
+                avatar.position = this.customerZone.position.clone();
+                avatar.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+
+                // Добавляем анимацию ожидания
+                const idleAnim = this.scene.beginAnimation(avatar.skeleton, 0, 100, true);
+
+                // Сохраняем ссылку на аватар в данных клиента
+                customerData.avatar = avatar;
+                customerData.animation = idleAnim;
+            }
+
+            return customerData;
+        } catch (error) {
+            console.error('Ошибка создания клиента:', error);
+            return null;
+        }
     }
 }

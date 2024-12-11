@@ -66,7 +66,7 @@ class UIManager {
         return { actionText };
     }
 
-    showHint(message, duration = 3000) {
+    showHint(message, duration = 5000) {
         console.log('Показываем сообщение:', message); // Отладка
         if (!this.topHintPanel) {
             console.warn('topHintPanel не инициализирован');

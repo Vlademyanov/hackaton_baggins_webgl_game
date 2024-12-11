@@ -50,6 +50,9 @@ class InteractionManager {
                     case "register":
                         actionText = "Взаимодействовать с кассой";
                         break;
+                    case "trash_bin":
+                        actionText = "Взаимодействовать с ведром для слива";
+                        break;
                 }
                 this.ui.showControlHint(actionText);
             } else {
