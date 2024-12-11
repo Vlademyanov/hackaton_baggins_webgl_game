@@ -1,5 +1,6 @@
 class InteractionManager {
     constructor(scene, camera, stationManager, customerManager, cashRegister, ui) {
+        console.log('InteractionManager version 2');
         this.scene = scene;
         this.camera = camera;
         this.stationManager = stationManager;
@@ -38,33 +39,32 @@ class InteractionManager {
                 const interactionType = this.currentLookAtObject.actionType;
                 console.log('Looking at:', interactionType); // Отладка
 
-                let hintText = "Нажмите E для взаимодействия с ";
-                switch(interactionType) {
+                let actionText = "";
+                switch (interactionType) {
                     case "coffee_station":
-                        hintText += this.currentLookAtObject.stationType;
+                        actionText = `Взаимодействовать с ${this.currentLookAtObject.stationType}`;
                         break;
                     case "customer":
-                        hintText += "клиентом";
+                        actionText = "Взаимодействовать с клиентом";
                         break;
                     case "register":
-                        hintText += "кассой";
+                        actionText = "Взаимодействовать с кассой";
                         break;
                 }
-                this.ui.showHint(hintText);
+                this.ui.showControlHint(actionText);
             } else {
                 this.currentLookAtObject = null;
-                this.ui.showHint("");
+                this.ui.showControlHint(null);
             }
         });
 
         // Обработка нажатия клавиши E
-        this.scene.onKeyboardObservable.add((kbInfo) => {
-            if (kbInfo.type === BABYLON.KeyboardEventTypes.KEYDOWN && 
-                (kbInfo.event.key === 'e' || kbInfo.event.key === 'E')) {
-                console.log('E key pressed, current object:', this.currentLookAtObject?.actionType); // Отладка
-                
+        this.scene.onPointerObservable.add((pointerInfo) => {
+            if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERDOWN &&
+                pointerInfo.event.button === 0) { // 0 = ЛКМ
+
                 if (this.currentLookAtObject) {
-                    switch(this.currentLookAtObject.actionType) {
+                    switch (this.currentLookAtObject.actionType) {
                         case "coffee_station":
                             console.log('Interacting with coffee station');
                             this.stationManager.handleStationInteraction(this.currentLookAtObject);
@@ -82,4 +82,4 @@ class InteractionManager {
             }
         });
     }
-} 
+}
