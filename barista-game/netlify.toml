@@ -1,8 +1,9 @@
 [build]
+  base = "barista-game"
   publish = "public"
-  command = ""  
+  command = ""
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
-  status = 200 
+  status = 200
