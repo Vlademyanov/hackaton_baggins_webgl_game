@@ -5,8 +5,8 @@ class UIManager {
 
         // Создаем основные UI элементы
         this.crosshair = this.createCrosshair();
-        this.hintPanel = this.createHintPanel(); // Верхняя панель для системных сообщений
-        this.controlHint = this.createControlHint(); // Подсказка под прицелом
+        this.topHintPanel = this.createTopHintPanel(); // Верхняя панель для сообщений
+        this.controlHint = this.createControlHint(); // Подсказка под курсором
         this.registerPanel = this.createRegisterPanel();
         this.recipePanel = this.createRecipePanel();
     }
@@ -21,70 +21,86 @@ class UIManager {
         return crosshair;
     }
 
-    createHintPanel() {
-        const container = new BABYLON.GUI.Rectangle("hintPanel");
-        container.width = "600px";
-        container.height = "40px";
-        container.cornerRadius = 10;
-        container.color = "white";
-        container.thickness = 1;
-        container.background = "black";
-        container.alpha = 0.7;
-        container.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-        container.top = "20px";
-        container.isVisible = false;
+    createTopHintPanel() {
+        const panel = new BABYLON.GUI.Rectangle("topHintPanel");
+        panel.width = "600px";
+        panel.height = "40px";
+        panel.cornerRadius = 10;
+        panel.color = "white";
+        panel.thickness = 1;
+        panel.background = "black";
+        panel.alpha = 0.7;
+        panel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        panel.top = "20px";
+        panel.isVisible = false;
+        panel.zIndex = 1000;
 
-        const textBlock = new BABYLON.GUI.TextBlock("hintText");
-        textBlock.text = "";
-        textBlock.color = "white";
-        textBlock.fontSize = 16;
-        textBlock.textWrapping = true;
-        textBlock.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+        const text = new BABYLON.GUI.TextBlock();
+        text.text = "";
+        text.color = "white";
+        text.fontSize = 16;
 
-        container.addControl(textBlock);
-        this.advancedTexture.addControl(container);
+        panel.addControl(text);
+        this.advancedTexture.addControl(panel);
 
-        return { container, textBlock };
+        return { panel, text };
     }
 
     createControlHint() {
-        const container = new BABYLON.GUI.StackPanel("controlHint");
+        const panel = new BABYLON.GUI.Rectangle("controlHintPanel");
+        panel.width = "200px";
+        panel.height = "60px";
+        panel.cornerRadius = 10;
+        panel.color = "white";
+        panel.thickness = 1;
+        panel.background = "black";
+        panel.alpha = 0.7;
+        panel.isVisible = false;
+        panel.linkOffsetY = 50;
+        panel.linkWithMesh(this.crosshair);
+
+        // Создаем контейнер для кнопки и текста
+        const container = new BABYLON.GUI.StackPanel();
         container.isVertical = true;
-        container.height = "80px";
-        container.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-        container.isVisible = false;
+        panel.addControl(container);
 
-        // Создаем кнопку
-        const keyText = new BABYLON.GUI.TextBlock("keyText");
-        keyText.text = "[E]";
-        keyText.color = "white";
-        keyText.fontSize = 20;
-        keyText.height = "30px";
+        // Кнопка
+        const buttonText = new BABYLON.GUI.TextBlock();
+        buttonText.text = "[E]";
+        buttonText.color = "white";
+        buttonText.fontSize = 20;
+        buttonText.height = "30px";
 
-        // Создаем текст действия
-        const actionText = new BABYLON.GUI.TextBlock("actionText");
+        // Текст действия
+        const actionText = new BABYLON.GUI.TextBlock();
         actionText.text = "";
         actionText.color = "white";
         actionText.fontSize = 16;
         actionText.height = "30px";
 
-        container.addControl(keyText);
+        container.addControl(buttonText);
         container.addControl(actionText);
-        this.advancedTexture.addControl(container);
 
-        return { container, keyText, actionText };
+        panel.zIndex = 999;
+        this.advancedTexture.addControl(panel);
+
+        return { panel, buttonText, actionText };
     }
 
     showHint(message, duration = 3000) {
-        if (!this.hintPanel || !this.hintPanel.textBlock) return;
+        if (!this.topHintPanel) return;
 
-        this.hintPanel.textBlock.text = message;
-        this.hintPanel.container.isVisible = true;
+        if (this._hintTimer) {
+            clearTimeout(this._hintTimer);
+        }
 
-        // Автоматически скрываем через указанное время
+        this.topHintPanel.text.text = message;
+        this.topHintPanel.panel.isVisible = true;
+
         if (duration > 0) {
-            setTimeout(() => {
-                this.hintPanel.container.isVisible = false;
+            this._hintTimer = setTimeout(() => {
+                this.topHintPanel.panel.isVisible = false;
+                this._hintTimer = null;
             }, duration);
         }
     }
@@ -94,18 +110,10 @@ class UIManager {
 
         if (action) {
             this.controlHint.actionText.text = action;
-            this.controlHint.container.isVisible = true;
+            this.controlHint.panel.isVisible = true;
+            this.controlHint.panel.linkWithMesh(this.crosshair);
         } else {
-            this.controlHint.container.isVisible = false;
-        }
-    }
-
-    hideAllHints() {
-        if (this.hintPanel) {
-            this.hintPanel.container.isVisible = false;
-        }
-        if (this.controlHint) {
-            this.controlHint.container.isVisible = false;
+            this.controlHint.panel.isVisible = false;
         }
     }
 

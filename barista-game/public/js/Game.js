@@ -9,6 +9,8 @@ class Game {
         this.cashRegister = null;
         this.stationManager = null;
         this.interactionManager = null;
+        this.currentLookAtObject = null;
+        this._lastHintTime = 0;
     }
 
     async initialize() {
@@ -24,7 +26,7 @@ class Game {
         this.cashRegister = new CashRegisterManager(this.scene, this.ui, this.customerManager);
         this.stationManager = new StationManager(this.scene, this.ui, this.cashRegister);
 
-        // ��оздаем менеджер взаимодействий последним, так как он зависит от всех остальных
+        // Cоздаем менеджер взаимодействий последним, так как он зависит от всех остальных
         this.interactionManager = new InteractionManager(
             this.scene,
             this.camera,
@@ -65,7 +67,7 @@ class Game {
             this.scene
         );
 
-        // Пол
+        // пол
         const ground = BABYLON.MeshBuilder.CreateGround(
             "ground", { width: 10, height: 10 },
             this.scene
@@ -77,21 +79,61 @@ class Game {
 
     checkInteractions() {
         const ray = this.camera.getForwardRay();
-        const length = 3;
+        const hit = this.scene.pickWithRay(ray);
 
-        const pick = this.scene.pickWithRay(ray, (mesh) => {
-            return this.stationManager.getInteractiveObjects().includes(mesh);
-        });
+        if (hit.pickedMesh) {
+            this.currentLookAtObject = hit.pickedMesh;
+            const interactionType = this.currentLookAtObject.actionType;
+            console.log('Looking at:', interactionType); // Отладка
 
-        console.log('Picked mesh:', pick.pickedMesh && pick.pickedMesh.stationType);
+            if (interactionType) {
+                let actionText = "";
+                switch (interactionType) {
+                    case "coffee_station":
+                        actionText = this.currentLookAtObject.stationType;
+                        break;
+                    case "customer":
+                        actionText = "Клиент";
+                        break;
+                    case "register":
+                        actionText = "Касса";
+                        break;
+                    case "trash_bin":
+                        actionText = "Ведро для слива";
+                        break;
+                }
 
-        if (pick.pickedMesh && pick.distance < length) {
-            this.ui.handleInteraction(pick.pickedMesh);
-            this.currentInteractiveObject = pick.pickedMesh;
+                if (actionText) {
+                    this.ui.showControlHint(actionText);
+                }
+            }
         } else {
-            this.ui.hideInteractionHint();
-            this.currentInteractiveObject = null;
+            if (this.currentLookAtObject) {
+                this.ui.showControlHint(null);
+                this.currentLookAtObject = null;
+            }
         }
+    }
+
+    showSystemMessage(message) {
+        const currentTime = Date.now();
+        if (currentTime - this._lastHintTime > 100) {
+            this.ui.showHint(message);
+            this._lastHintTime = currentTime;
+        }
+    }
+
+    async handleStationInteraction(station) {
+        this.showSystemMessage("Выполняется действие...");
+    }
+
+    async handleCustomerInteraction(customer) {
+        this.showSystemMessage("Обслуживаем клиента...");
+    }
+
+    // Пример использования верхней панели для системных сообщений
+    handleOrder() {
+        this.ui.showHint("Заказ принят!", 3000);
     }
 }
 
