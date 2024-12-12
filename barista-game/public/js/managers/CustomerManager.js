@@ -6,6 +6,14 @@ class CustomerManager {
         this.customerZone = this.createCustomerZone();
         this.currentCustomer = null;
         this.orderStatus = 'waiting';
+
+        this.decorativeAvatar = null;
+        this.positions = {
+            service: new BABYLON.Vector3(0, 0, 0),
+            exit: new BABYLON.Vector3(-7, 0, 2)
+        };
+
+        this.createDecorativeAvatar();
     }
 
     createCustomerZone() {
@@ -21,6 +29,23 @@ class CustomerManager {
         zone.material = material;
 
         return zone;
+    }
+
+    async createDecorativeAvatar() {
+        try {
+            const avatar = await this.avatarManager.createRandomAvatar();
+            if (avatar) {
+                this.decorativeAvatar = avatar;
+                avatar.position = new BABYLON.Vector3(
+                    this.customerZone.position.x,
+                    0,
+                    this.customerZone.position.z
+                );
+                avatar.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+            }
+        } catch (error) {
+            console.error('Error creating decorative avatar:', error);
+        }
     }
 
     async handleCustomerInteraction() {
@@ -42,6 +67,11 @@ class CustomerManager {
                         this.ui.showHint(message);
                     }
                 }
+
+                if (this.decorativeAvatar) {
+                    this.decorativeAvatar.position = this.customerZone.position.clone();
+                    this.decorativeAvatar.position.y = 0;
+                }
             } else if (this.orderStatus === 'ready') {
                 const response = await fetch('/api/order/complete', {
                     method: 'POST',
@@ -59,16 +89,47 @@ class CustomerManager {
                             Нажмите E на клиенте для нового заказа.`);
                     }
                 }
+
+                if (this.decorativeAvatar) {
+                    await this.animateAvatarExit();
+                    await this.createDecorativeAvatar();
+                }
             } else if (this.orderStatus === 'finished') {
                 this.orderStatus = 'waiting';
                 this.ui.showHint('Готовы к новому заказу');
             }
         } catch (error) {
-            console.error('Ошибка при взаимодействии с клиентом:', error);
-            if (this.ui) {
-                this.ui.showHint('Произошла ошибка при обработке заказа');
-            }
+            console.error('Error in handleCustomerInteraction:', error);
         }
+    }
+
+    async animateAvatarExit() {
+        if (!this.decorativeAvatar) return;
+
+        const animation = new BABYLON.Animation(
+            "customerExit",
+            "position",
+            30,
+            BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+            BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+        );
+
+        const keys = [];
+        keys.push({
+            frame: 0,
+            value: this.decorativeAvatar.position.clone()
+        });
+        keys.push({
+            frame: 30,
+            value: this.positions.exit
+        });
+
+        animation.setKeys(keys);
+        this.decorativeAvatar.animations = [animation];
+
+        await this.scene.beginAnimation(this.decorativeAvatar, 0, 30, false).waitAsync();
+        this.decorativeAvatar.dispose();
+        this.decorativeAvatar = null;
     }
 
     async updateCustomerInfo() {
@@ -121,22 +182,22 @@ class CustomerManager {
         try {
             // Получаем URL случайного аватара
             const avatarUrl = await this.avatarManager.getRandomAvatar();
-
             // Загружаем 3D модель
+
             const avatar = await this.avatarManager.loadAvatarForCustomer(
                 customerData.id,
                 avatarUrl
             );
+            // Позиционируем аватар
 
             if (avatar) {
-                // Позиционируем аватар
                 avatar.position = this.customerZone.position.clone();
-                avatar.rotation = new BABYLON.Vector3(0, Math.PI, 0);
-
                 // Добавляем анимацию ожидания
+                avatar.rotation = new BABYLON.Vector3(0, Math.PI, 0);
+                // Сохраняем ссылку на аватар в данных клиента
+
                 const idleAnim = this.scene.beginAnimation(avatar.skeleton, 0, 100, true);
 
-                // Сохраняем ссылку на аватар в данных клиента
                 customerData.avatar = avatar;
                 customerData.animation = idleAnim;
             }

@@ -27,8 +27,7 @@ class CashRegisterManager {
 
     createRegisterZone() {
         const register = BABYLON.MeshBuilder.CreateBox(
-            "register", 
-            {height: 1.2, width: 0.8, depth: 0.6}, 
+            "register", { height: 1.2, width: 0.8, depth: 0.6 },
             this.scene
         );
         register.position = new BABYLON.Vector3(-2, 1, -2);
@@ -53,11 +52,11 @@ class CashRegisterManager {
                 type: 'offline',
                 status: 'preparing'
             };
-            
+
             // Обновляем статус и показываем информацию
             this.customerManager.setOrderStatus('preparing');
             this.showOrderDetails();
-            
+
             // Инициализируем рецепт
             const recipe = this.recipes[this.currentOrder.drink];
             if (recipe) {
@@ -67,7 +66,7 @@ class CashRegisterManager {
                     targetSteps: recipe.steps
                 });
             }
-            
+
             this.ui.showHint('Заказ принят. Приступайте к приготовлению напитка');
         } else if (orderStatus === 'preparing' && this.currentOrder) {
             // Просмотр деталей заказа
@@ -127,4 +126,4 @@ class CashRegisterManager {
     getInteractiveObjects() {
         return [this.registerZone];
     }
-} 
+}
